@@ -1,0 +1,38 @@
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - .env
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: market
+      POSTGRES_PASSWORD: market
+      POSTGRES_DB: market
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    #ports:
+    #  - "6379:6379"
+
+  worker:
+      build:
+        context: .
+        dockerfile: docker/Dockerfile
+      command: celery -A app.workers.celery_app worker --loglevel=info -Q analytics
+      depends_on:
+        - redis
+        - postgres
+      env_file:
+        - .env
