@@ -11,6 +11,9 @@ services:
       - redis
     env_file:
       - .env
+  
+  # frontend:
+    # TODO
 
   postgres:
     image: postgres:15

@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.models.job import Job
 from app.models.analysis_result import AnalysisResult
 from app.models.price_history import PriceHistory
+from app.models.enums import JobStatus
 from app.services.market_client import fetch_klines
 from app.services.price_data_service import parse_klines
 from app.services.analysis_service import compute_analysis
@@ -20,7 +21,7 @@ from app.services.analysis_service import compute_analysis
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-
+# TODO status processing for jobs
 @celery_app.task
 def task_run_analysis(job_id: int, symbol: str, interval: str, limit: int,
     startTime: datetime | None, endTime: datetime | None, monte_carlo_runs: int
@@ -28,6 +29,15 @@ def task_run_analysis(job_id: int, symbol: str, interval: str, limit: int,
     session = SessionLocal()
 
     try:
+        # ---- Update job status ----
+        session.execute(
+            update(Job)
+            .where(Job.id == job_id)
+            .values(status=JobStatus.PROCESSING)
+        )
+        session.commit()
+
+        # ---- Process analysis ----
         data = fetch_klines(symbol, interval, limit, startTime, endTime)
 
         result_data = compute_analysis(data, monte_carlo_runs)
@@ -42,7 +52,7 @@ def task_run_analysis(job_id: int, symbol: str, interval: str, limit: int,
         session.execute(
             update(Job)
             .where(Job.id == job_id)
-            .values(status="completed")
+            .values(status=JobStatus.COMPLETED)
         )
 
         session.commit()
@@ -51,7 +61,7 @@ def task_run_analysis(job_id: int, symbol: str, interval: str, limit: int,
         session.execute(
             update(Job)
             .where(Job.id == job_id)
-            .values(status="failed")
+            .values(status=JobStatus.FAILED)
         )
         session.commit()
         logger.error(f"The analysis process for the job {job_id} failed: {e}")
@@ -68,6 +78,15 @@ def task_download_price_history(
     session = SessionLocal()
 
     try:
+        # ---- Update job status ----
+        session.execute(
+            update(Job)
+            .where(Job.id == job_id)
+            .values(status=JobStatus.PROCESSING)
+        )
+        session.commit()
+
+        # ---- Download price candles ----
         data = fetch_klines(symbol, interval, limit, startTime, endTime)
 
         rows = parse_klines(symbol, interval, data)
@@ -82,7 +101,7 @@ def task_download_price_history(
         session.execute(
             update(Job)
             .where(Job.id == job_id)
-            .values(status="completed")
+            .values(status=JobStatus.COMPLETED)
         )
 
         session.commit()
@@ -91,7 +110,7 @@ def task_download_price_history(
         session.execute(
             update(Job)
             .where(Job.id == job_id)
-            .values(status="failed")
+            .values(status=JobStatus.FAILED)
         )
         session.commit()
         logger.error(f"Price history job {job_id} failed: {e}")

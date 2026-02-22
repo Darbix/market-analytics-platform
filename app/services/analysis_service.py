@@ -12,7 +12,7 @@ def compute_analysis(data: list, monte_carlo_runs: int):
     df["close"] = df["close"].astype(float)
 
     if len(df) < 15:
-        raise ValueError("Not enough candles for RSI")
+        raise ValueError("Not enough candles for RSI") # TODO
 
     # RSI
     delta = df["close"].diff()

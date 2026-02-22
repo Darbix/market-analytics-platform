@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.models.job import Job
 from app.models.analysis_result import AnalysisResult
 from app.models.price_history import PriceHistory
+from app.models.enums import JobStatus
 from app.workers.tasks import task_run_analysis, task_download_price_history
 from app.api.schemas import TrackRequest, AnalysisRequest, PriceHistoryRequest
 
@@ -80,25 +81,40 @@ async def get_analysis(job_id: int, session: AsyncSessionLocal = Depends(get_ses
     analysis = result.scalar_one_or_none()
 
     if not analysis:
-        return {"status": "processing"}
+        result = await session.execute(
+            select(Job).where(Job.id == job_id)
+        )
+        job = result.scalar_one_or_none()
+        
+        if not job:
+            return {"error": "Job not found"}
+
+        return {
+            "job_id": job.id,
+            "status": job.status.value,
+            "data": None
+        }
 
     return {
-        "volatility": analysis.volatility,
-        "rsi_last": analysis.rsi_last,
-        "monte_carlo_mean": analysis.monte_carlo_mean,
+        "job_id": job_id,
+        "status": JobStatus.COMPLETED,
+        "data": {
+            "volatility": analysis.volatility,
+            "rsi_last": analysis.rsi_last,
+            "monte_carlo_mean": analysis.monte_carlo_mean
+        }
     }
 
 
 # -----------------------------
 # Price history endpoints
 # -----------------------------
-# TODO time range of the history-plot I want to see
 @router.post("/price_history")
 async def download_price_history(req: PriceHistoryRequest, session: AsyncSessionLocal = Depends(get_session)):
     job = Job(
         symbol=req.symbol.upper(),
         interval=req.interval,
-        status="pending",
+        status=JobStatus.PENDING,
         job_type="price_history"
     )
     session.add(job)
@@ -111,7 +127,7 @@ async def download_price_history(req: PriceHistoryRequest, session: AsyncSession
         req.interval,
         req.limit,
         req.startTime,
-        req.endTime,
+        req.endTime
     )
 
     return {"job_id": job.id}
