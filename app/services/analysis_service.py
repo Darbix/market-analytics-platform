@@ -12,19 +12,35 @@ def compute_analysis(data: list, monte_carlo_runs: int):
     df["close"] = df["close"].astype(float)
 
     if len(df) < 15:
-        raise ValueError("Not enough candles for RSI") # TODO
+        raise ValueError("Not enough candles for RSI")
 
-    # RSI
+    # ----- RSI -----
+    RSI_PERIOD = 14
+    RSI_SCALE = 100
     delta = df["close"].diff()
-    gain = delta.clip(lower=0).rolling(14).mean()
-    loss = -delta.clip(upper=0).rolling(14).mean()
+    gain = delta.clip(lower=0).rolling(RSI_PERIOD).mean()
+    loss = -delta.clip(upper=0).rolling(RSI_PERIOD).mean()
     rs = gain / loss
-    rsi = 100 - (100 / (1 + rs))
+    rsi = RSI_SCALE - (RSI_SCALE / (1 + rs))
 
-    # Volatility
-    volatility = df["close"].pct_change().std() * np.sqrt(252)
 
-    # Monte Carlo
+    # ----- Volatility -----
+    # Calculate periods per year dynamically
+    periods_per_year = 365
+    timestamps = pd.to_datetime(df["open_time"], unit="ms")
+    if len(timestamps) >= 2:
+        delta_seconds = (timestamps.iloc[-1] - timestamps.iloc[0]).total_seconds()
+        periods = len(timestamps) - 1
+        seconds_per_period = delta_seconds / periods
+        seconds_per_year = 365 * 24 * 60 * 60
+        periods_per_year = seconds_per_year / seconds_per_period
+    
+    # Compute annualized volatility
+    returns = df["close"].pct_change().dropna()
+    volatility = returns.std() * np.sqrt(periods_per_year)
+
+
+    # ----- Monte Carlo -----
     last_price = df["close"].iloc[-1]
     returns = df["close"].pct_change().dropna()
     mu = returns.mean()

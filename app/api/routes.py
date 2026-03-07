@@ -51,6 +51,26 @@ async def track_market(req: TrackRequest, session: AsyncSessionLocal = Depends(g
 
 
 # -----------------------------
+# Generic job status retrieval
+# -----------------------------
+@router.get("/jobs/{job_id}")
+async def get_job(job_id: int, session: AsyncSessionLocal = Depends(get_session)):
+    result = await session.execute(
+        select(Job).where(Job.id == job_id)
+    )
+    job = result.scalar_one_or_none()
+
+    if not job:
+        return {"error": "Job not found"}
+
+    return {
+        "job_id": job.id,
+        "status": job.status.value,
+        "job_type": job.job_type
+    }
+
+
+# -----------------------------
 # Analysis endpoints
 # -----------------------------
 @router.post("/analysis")
@@ -109,7 +129,7 @@ async def get_analysis(job_id: int, session: AsyncSessionLocal = Depends(get_ses
 # -----------------------------
 # Price history endpoints
 # -----------------------------
-@router.post("/price_history")
+@router.post("/price-history")
 async def download_price_history(req: PriceHistoryRequest, session: AsyncSessionLocal = Depends(get_session)):
     job = Job(
         symbol=req.symbol.upper(),
@@ -133,7 +153,7 @@ async def download_price_history(req: PriceHistoryRequest, session: AsyncSession
     return {"job_id": job.id}
 
 
-@router.get("/price_history/{symbol}")
+@router.get("/price-history/{symbol}")
 async def get_prices(
     symbol: str,
     interval: str = "1m",
@@ -142,13 +162,6 @@ async def get_prices(
     endTime: datetime | None = Query(None),
     session: AsyncSessionLocal = Depends(get_session)
 ):
-    # result = await session.execute(
-    #     select(PriceHistory)
-    #     .where(PriceHistory.symbol == symbol.upper())
-    #     .where(PriceHistory.interval == interval)
-    #     .order_by(PriceHistory.timestamp.desc())
-    #     .limit(limit)
-    # )
     query = select(PriceHistory).where(
         PriceHistory.symbol == symbol.upper(),
         PriceHistory.interval == interval
@@ -168,18 +181,26 @@ async def get_prices(
     # sort ascending for chart display
     rows = sorted(rows, key=lambda x: x.timestamp)
 
+    data = None
+    if rows:
+        data = {
+            "prices": [
+                {
+                    "timestamp": x.timestamp.isoformat(),
+                    "open": x.open,
+                    "high": x.high,
+                    "low": x.low,
+                    "close": x.close,
+                    "volume": x.volume
+                }
+                for x in rows
+            ]
+        }
+
     return {
         "symbol": symbol,
         "interval": interval,
-        "prices": [
-            {
-                "timestamp": x.timestamp.isoformat(),
-                "open": x.open,
-                "high": x.high,
-                "low": x.low,
-                "close": x.close,
-                "volume": x.volume
-            }
-            for x in rows
-        ]
+        "startTime": startTime,
+        "endTime": endTime,
+        "data": data
     }

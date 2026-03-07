@@ -89,14 +89,15 @@ def task_download_price_history(
         # ---- Download price candles ----
         data = fetch_klines(symbol, interval, limit, startTime, endTime)
 
-        rows = parse_klines(symbol, interval, data)
+        if data:
+            rows = parse_klines(symbol, interval, data)
 
-        # Bulk insert
-        stmt = insert(PriceHistory).values(rows)
-        stmt = stmt.on_conflict_do_nothing(
-            index_elements=["symbol", "interval", "timestamp"]
-        )
-        session.execute(stmt)
+            # Bulk insert
+            stmt = insert(PriceHistory).values(rows)
+            stmt = stmt.on_conflict_do_nothing(
+                index_elements=["symbol", "interval", "timestamp"]
+            )
+            session.execute(stmt)
 
         session.execute(
             update(Job)

@@ -8,3 +8,6 @@ __pycache__/
 
 # Project specific
 notes.txt
+
+# Custom
+cat_files.sh
