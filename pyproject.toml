@@ -5,6 +5,11 @@ description = ""
 authors = ["David Kedra <63604382+Darbix@users.noreply.github.com>"]
 readme = "README.md"
 
+packages = [
+    { include = "app" },
+    { include = "cli" }
+]
+
 [tool.poetry.dependencies]
 python = ">=3.12,<3.15"
 fastapi = "^0.129.0"
@@ -21,6 +26,8 @@ asyncpg = "^0.31.0"
 psycopg2-binary = "^2.9.11"
 numpy = "^2.4.2"
 pandas = "^3.0.1"
+typer = {extras = ["all"], version = "^0.24.1"}
+requests = "^2.32.5"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -31,3 +38,6 @@ ruff = "^0.15.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+market-cli = "cli.main:app"
