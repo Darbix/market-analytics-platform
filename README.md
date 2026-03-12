@@ -16,7 +16,7 @@ This project is currently a work in progress and serves as a personal project to
 - REST API built with FastAPI
 - Interactive charts using React and Chart.js
 - PostgreSQL storage for historical data
-
+- CLI tool
 
 ## Project Structure
 
@@ -29,6 +29,7 @@ This project is currently a work in progress and serves as a personal project to
 │   ├── services/     # Market data processing and business logic
 │   └── workers/      # Celery background tasks and async processing
 ├── frontend/         # Frontend React web application
+├── cli/              # CLI Tool logic and API wrappers
 └── docker/           # Dockerfile configuration
 ```
 
@@ -70,3 +71,19 @@ npm install
 npm run dev -- --host
 ```
 
+## Command Line Interface (CLI)
+Activate the environment:
+```
+poetry shell
+```
+
+General help:
+```
+market-cli --help
+```
+
+Example commands:
+```
+market-cli analyze BTCUSDT --interval 1d --limit 30 --monte-carlo-runs 500
+market-cli download ETHUSDT --interval 1h --limit 24 --start-time 2026-01-01
+```
