@@ -85,8 +85,8 @@ async def create_analysis(req: AnalysisRequest, session: AsyncSessionLocal = Dep
         req.symbol,
         req.interval,
         req.limit,
-        req.startTime,
-        req.endTime,
+        req.start_time,
+        req.end_time,
         req.monte_carlo_runs
     )
 
@@ -146,8 +146,8 @@ async def download_price_history(req: PriceHistoryRequest, session: AsyncSession
         req.symbol.upper(),
         req.interval,
         req.limit,
-        req.startTime,
-        req.endTime
+        req.start_time,
+        req.end_time
     )
 
     return {"job_id": job.id}
@@ -158,8 +158,8 @@ async def get_prices(
     symbol: str,
     interval: str = "1m",
     limit: int = 100,
-    startTime: datetime | None = Query(None),
-    endTime: datetime | None = Query(None),
+    start_time: datetime | None = Query(None),
+    end_time: datetime | None = Query(None),
     session: AsyncSessionLocal = Depends(get_session)
 ):
     query = select(PriceHistory).where(
@@ -167,18 +167,19 @@ async def get_prices(
         PriceHistory.interval == interval
     )
 
-    if startTime:
-        query = query.where(PriceHistory.timestamp >= startTime)
-    if endTime:
-        query = query.where(PriceHistory.timestamp <= endTime)
+    if start_time:
+        query = query.where(PriceHistory.timestamp >= start_time)
+    if end_time:
+        query = query.where(PriceHistory.timestamp <= end_time)
 
-    query = query.order_by(PriceHistory.timestamp.desc()).limit(limit)
+    if not start_time:
+        query = query.order_by(PriceHistory.timestamp.desc()).limit(limit)
+    else:
+        query = query.order_by(PriceHistory.timestamp.asc()).limit(limit)
 
     result = await session.execute(query)
-
     rows = result.scalars().all()
 
-    # sort ascending for chart display
     rows = sorted(rows, key=lambda x: x.timestamp)
 
     data = None
@@ -200,7 +201,7 @@ async def get_prices(
     return {
         "symbol": symbol,
         "interval": interval,
-        "startTime": startTime,
-        "endTime": endTime,
+        "startTime": start_time,
+        "endTime": end_time,
         "data": data
     }

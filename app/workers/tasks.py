@@ -21,10 +21,10 @@ from app.services.analysis_service import compute_analysis
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# TODO status processing for jobs
+
 @celery_app.task
 def task_run_analysis(job_id: int, symbol: str, interval: str, limit: int,
-    startTime: datetime | None, endTime: datetime | None, monte_carlo_runs: int
+    start_time: datetime | None, end_time: datetime | None, monte_carlo_runs: int
 ):
     session = SessionLocal()
 
@@ -38,7 +38,7 @@ def task_run_analysis(job_id: int, symbol: str, interval: str, limit: int,
         session.commit()
 
         # ---- Process analysis ----
-        data = fetch_klines(symbol, interval, limit, startTime, endTime)
+        data = fetch_klines(symbol, interval, limit, start_time, end_time)
 
         result_data = compute_analysis(data, monte_carlo_runs)
 
@@ -73,7 +73,7 @@ def task_run_analysis(job_id: int, symbol: str, interval: str, limit: int,
 @celery_app.task
 def task_download_price_history(
     job_id: int, symbol: str, interval: str, limit: int,
-    startTime: datetime | None, endTime: datetime | None
+    start_time: datetime | None, end_time: datetime | None
 ):
     session = SessionLocal()
 
@@ -87,7 +87,7 @@ def task_download_price_history(
         session.commit()
 
         # ---- Download price candles ----
-        data = fetch_klines(symbol, interval, limit, startTime, endTime)
+        data = fetch_klines(symbol, interval, limit, start_time, end_time)
 
         if data:
             rows = parse_klines(symbol, interval, data)
