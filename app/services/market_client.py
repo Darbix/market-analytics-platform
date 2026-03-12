@@ -6,17 +6,17 @@ from app.core.config import settings
 
 def fetch_klines(
     symbol: str, interval: str, limit: int,
-    startTime: datetime | None = None, endTime: datetime | None = None
+    start_time: datetime | None = None, end_time: datetime | None = None
 ):
     params={
         "symbol": symbol,
         "interval": interval,
         "limit": limit,
     }
-    if startTime:
-        params["startTime"] = int(startTime.timestamp() * 1000)
-    if endTime:
-        params["endTime"] = int(endTime.timestamp() * 1000)
+    if start_time:
+        params["startTime"] = int(start_time.timestamp() * 1000)
+    if end_time:
+        params["endTime"] = int(end_time.timestamp() * 1000)
     
     response = requests.get(
         settings.binance_url,

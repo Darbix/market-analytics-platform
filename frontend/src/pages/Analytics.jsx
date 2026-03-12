@@ -69,7 +69,7 @@ export default function MarketAnalytics() {
           interval,
           limit,
           startTime: startTime || null,
-          endTime: endTime || null,
+          endTime: endTime || null
         }),
         signal: controller.signal,
       });
@@ -129,6 +129,8 @@ export default function MarketAnalytics() {
         interval,
         limit,
         monte_carlo_runs: monteCarlo,
+        startTime: startTime || null,
+        endTime: endTime || null
       }),
     });
     const data = await res.json();
