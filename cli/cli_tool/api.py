@@ -1,5 +1,5 @@
 import requests
-from cli.config import settings
+from cli_tool.config import settings
 from datetime import datetime
 
 
