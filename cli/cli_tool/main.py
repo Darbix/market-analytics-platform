@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 from typing import Optional
 
-from cli.api import (
+from cli_tool.api import (
     request_price_history,
     run_analysis,
     get_job,

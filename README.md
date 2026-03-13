@@ -23,14 +23,21 @@ This project is currently a work in progress and serves as a personal project to
 ```bash
 .
 ├── app/
-│   ├── api/          # FastAPI routes and Pydantic schemas
-│   ├── core/         # Configuration (env vars) and database setup
-│   ├── models/       # SQLAlchemy ORM models
-│   ├── services/     # Market data processing and business logic
-│   └── workers/      # Celery background tasks and async processing
-├── frontend/         # Frontend React web application
-├── cli/              # CLI Tool logic and API wrappers
-└── docker/           # Dockerfile configuration
+├── backend/
+│   └── app/
+│   │   ├── api/          # FastAPI routes and Pydantic schemas
+│   │   ├── core/         # Configuration (env vars) and database setup
+│   │   ├── models/       # SQLAlchemy ORM models
+│   │   ├── services/     # Market data processing and business logic
+│   │   └── workers/      # Celery background tasks and async processing
+│   ├── Dockerfile
+│   └── pyproject.toml
+├── frontend/             # Frontend React web application
+├── cli/                  # CLI
+│   ├── cli_tool/         # Python package for CLI logic and API wrappers
+│   └── pyproject.toml
+├── docker-compose.yml
+└── README.md
 ```
 
 
@@ -66,15 +73,20 @@ http://localhost:8000
 
 ### 4. Run the frontend
 ```
-cd frontend
-npm install
-npm run dev -- --host
+npm install --prefix frontend
+npm run dev --prefix frontend -- --host
 ```
+
+### 5. Install CLI dependencies
+```
+poetry install -C cli/
+```
+
 
 ## Command Line Interface (CLI)
 Activate the environment:
 ```
-poetry shell
+poetry shell -C cli/
 ```
 
 General help:
@@ -86,4 +98,9 @@ Example commands:
 ```
 market-cli analyze BTCUSDT --interval 1d --limit 30 --monte-carlo-runs 500
 market-cli download ETHUSDT --interval 1h --limit 24 --start-time 2026-01-01
+```
+
+Exit the environment:
+```
+exit
 ```
