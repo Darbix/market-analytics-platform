@@ -13,6 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Prepare .env for tests
+        run: cp backend/.env.example backend/.env
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -43,6 +46,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Prepare .env for tests
+        run: cp backend/.env.example backend/.env
 
       - name: Start containers
         run: docker compose up -d --build
