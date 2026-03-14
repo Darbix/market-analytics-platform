@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import insert
 from app.models.price_history import PriceHistory
 
@@ -12,7 +12,7 @@ def parse_klines(symbol: str, interval: str, data: list):
         rows.append({
             "symbol": symbol,
             "interval": interval,
-            "timestamp": datetime.fromtimestamp(open_time / 1000),
+            "timestamp": datetime.fromtimestamp(open_time / 1000, tz=timezone.utc),
             "open": float(open_),
             "high": float(high),
             "low": float(low),

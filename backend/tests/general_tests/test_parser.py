@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.services.price_data_service import parse_klines
 
@@ -12,7 +12,7 @@ def test_parse_klines():
     assert rows[0] == {
         'symbol': 'BTCUSDT',
         'interval': '1m',
-        'timestamp': datetime(1970, 1, 1, 1, 0, 1),
+        'timestamp': datetime.fromtimestamp(data[0][0]/1000, tz=timezone.utc),
         'open': 1.0,
         'high': 2.0,
         'low': 0.5,
