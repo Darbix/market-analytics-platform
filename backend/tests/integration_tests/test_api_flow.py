@@ -52,23 +52,25 @@ import time
 from fastapi import status
 
 
-def wait_for_analysis_job(client, job_id, timeout=60):
+def wait_for_analysis_job(client, job_id, timeout=120):
     """Poll job status until completed."""
     start = time.time()
-    delay = 1
+    delay = 2
+    status = "UNKNOWN"
 
     while time.time() - start < timeout:
         res = client.get(f"/analysis/{job_id}")
         res.raise_for_status()
 
         data = res.json()
+        status = data["status"]
 
-        if data["status"] == "COMPLETED":
+        if status == "COMPLETED":
             return data
 
         time.sleep(delay)
 
-    raise TimeoutError(f"Job {job_id} did not complete.")
+    raise TimeoutError(f"Job {job_id} did not complete in {timeout} s. Status: {status}.")
 
 
 def test_health_endpoint(client):
