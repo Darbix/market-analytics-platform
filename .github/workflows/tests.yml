@@ -75,4 +75,13 @@ jobs:
 
       - name: Stop containers
         if: always()
-        run: docker compose down
+        run: |
+          echo "----- API Logs -----"
+          docker logs market-analytics-platform-api-1 || true
+          echo "----- Worker Logs -----"
+          docker logs market-analytics-platform-worker-1 || true
+          echo "----- Postgres Logs -----"
+          docker logs market-analytics-platform-postgres-1 || true
+          echo "----- Redis Logs -----"
+          docker logs market-analytics-platform-redis-1 || true
+          docker compose down

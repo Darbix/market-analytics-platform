@@ -17,7 +17,7 @@ def wait_for_analysis_job(client, job_id, timeout=120):
 
         if status == "COMPLETED":
             return data
-        else if status == "FAILED":
+        elif status == "FAILED":
             break
 
         time.sleep(delay)
