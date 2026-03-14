@@ -2,13 +2,12 @@ from typing import List
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from app.core.database_async import AsyncSessionLocal
-from app.core.config import settings
 from app.models.job import Job
 from app.models.analysis_result import AnalysisResult
 from app.models.price_history import PriceHistory
@@ -43,7 +42,7 @@ async def health():
 # -----------------------------
 @router.post("/track")
 async def track_market(req: TrackRequest, session: AsyncSessionLocal = Depends(get_session)):
-    job = Job(symbol=req.symbol, interval=req.interval)
+    job = Job()
     session.add(job)
     await session.commit()
     await session.refresh(job)
@@ -61,11 +60,15 @@ async def get_job(job_id: int, session: AsyncSessionLocal = Depends(get_session)
     job = result.scalar_one_or_none()
 
     if not job:
-        return {"error": "Job not found"}
+        # return {"error": "Job not found"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"Job {job_id} not found"
+        )
 
     return {
         "job_id": job.id,
-        "status": job.status.value,
+        "status": job.status,
         "job_type": job.job_type
     }
 
@@ -75,7 +78,7 @@ async def get_job(job_id: int, session: AsyncSessionLocal = Depends(get_session)
 # -----------------------------
 @router.post("/analysis")
 async def create_analysis(req: AnalysisRequest, session: AsyncSessionLocal = Depends(get_session)):
-    job = Job(symbol=req.symbol, interval=req.interval)
+    job = Job()
     session.add(job)
     await session.commit()
     await session.refresh(job)
@@ -107,11 +110,14 @@ async def get_analysis(job_id: int, session: AsyncSessionLocal = Depends(get_ses
         job = result.scalar_one_or_none()
         
         if not job:
-            return {"error": "Job not found"}
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Job {job_id} not found"
+            )
 
         return {
             "job_id": job.id,
-            "status": job.status.value,
+            "status": job.status,
             "data": None
         }
 
@@ -132,8 +138,6 @@ async def get_analysis(job_id: int, session: AsyncSessionLocal = Depends(get_ses
 @router.post("/price-history")
 async def download_price_history(req: PriceHistoryRequest, session: AsyncSessionLocal = Depends(get_session)):
     job = Job(
-        symbol=req.symbol.upper(),
-        interval=req.interval,
         status=JobStatus.PENDING,
         job_type="price_history"
     )

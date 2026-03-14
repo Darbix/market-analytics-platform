@@ -23,36 +23,22 @@ logger.setLevel(logging.INFO)
 
 
 @celery_app.task
-def task_run_analysis(job_id: int, symbol: str, interval: str, limit: int,
+def task_run_analysis(
+    job_id: int, symbol: str, interval: str, limit: int,
     start_time: datetime | None, end_time: datetime | None, monte_carlo_runs: int
 ):
     session = SessionLocal()
 
     try:
-        # ---- Update job status ----
-        session.execute(
-            update(Job)
-            .where(Job.id == job_id)
-            .values(status=JobStatus.PROCESSING)
-        )
-        session.commit()
-
-        # ---- Process analysis ----
-        data = fetch_klines(symbol, interval, limit, start_time, end_time)
-
-        result_data = compute_analysis(data, monte_carlo_runs)
-
-        result = AnalysisResult(
-            job_id=job_id,
-            **result_data
-        )
-
-        session.add(result)
-
-        session.execute(
-            update(Job)
-            .where(Job.id == job_id)
-            .values(status=JobStatus.COMPLETED)
+        run_analysis_logic(
+            session,
+            job_id,
+            symbol,
+            interval,
+            limit,
+            start_time,
+            end_time,
+            monte_carlo_runs
         )
 
         session.commit()
@@ -70,6 +56,34 @@ def task_run_analysis(job_id: int, symbol: str, interval: str, limit: int,
         session.close()
 
 
+def run_analysis_logic(
+    session, job_id: int, symbol: str, interval: str, limit: int,
+    start_time: datetime | None, end_time: datetime | None, monte_carlo_runs: int
+):
+    session.execute(
+        update(Job)
+        .where(Job.id == job_id)
+        .values(status=JobStatus.PROCESSING)
+    )
+
+    data = fetch_klines(symbol, interval, limit, start_time, end_time)
+
+    result_data = compute_analysis(data, monte_carlo_runs)
+
+    result = AnalysisResult(
+        job_id=job_id,
+        **result_data
+    )
+
+    session.add(result)
+
+    session.execute(
+        update(Job)
+        .where(Job.id == job_id)
+        .values(status=JobStatus.COMPLETED)
+    )
+
+
 @celery_app.task
 def task_download_price_history(
     job_id: int, symbol: str, interval: str, limit: int,
@@ -78,31 +92,14 @@ def task_download_price_history(
     session = SessionLocal()
 
     try:
-        # ---- Update job status ----
-        session.execute(
-            update(Job)
-            .where(Job.id == job_id)
-            .values(status=JobStatus.PROCESSING)
-        )
-        session.commit()
-
-        # ---- Download price candles ----
-        data = fetch_klines(symbol, interval, limit, start_time, end_time)
-
-        if data:
-            rows = parse_klines(symbol, interval, data)
-
-            # Bulk insert
-            stmt = insert(PriceHistory).values(rows)
-            stmt = stmt.on_conflict_do_nothing(
-                index_elements=["symbol", "interval", "timestamp"]
-            )
-            session.execute(stmt)
-
-        session.execute(
-            update(Job)
-            .where(Job.id == job_id)
-            .values(status=JobStatus.COMPLETED)
+        download_price_history_logic(
+            session,
+            job_id,
+            symbol,
+            interval,
+            limit,
+            start_time,
+            end_time
         )
 
         session.commit()
@@ -118,3 +115,33 @@ def task_download_price_history(
 
     finally:
         session.close()
+
+
+def download_price_history_logic(
+    session, job_id: int, symbol: str, interval: str, limit: int,
+    start_time: datetime | None, end_time: datetime | None
+):
+    # ---- Update job status ----
+    session.execute(
+        update(Job)
+        .where(Job.id == job_id)
+        .values(status=JobStatus.PROCESSING)
+    )
+
+    data = fetch_klines(symbol, interval, limit, start_time, end_time)
+
+    if data:
+        rows = parse_klines(symbol, interval, data)
+
+        stmt = insert(PriceHistory).values(rows)
+        stmt = stmt.on_conflict_do_nothing(
+            index_elements=["symbol", "interval", "timestamp"]
+        )
+
+        session.execute(stmt)
+
+    session.execute(
+        update(Job)
+        .where(Job.id == job_id)
+        .values(status=JobStatus.COMPLETED)
+    )
