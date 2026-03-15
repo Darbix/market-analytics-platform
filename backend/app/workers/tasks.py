@@ -65,8 +65,28 @@ def run_analysis_logic(
         .where(Job.id == job_id)
         .values(status=JobStatus.PROCESSING)
     )
-
-    data = fetch_klines(symbol, interval, limit, start_time, end_time)
+    
+    try:
+        data = fetch_klines(symbol, interval, limit, start_time, end_time)
+    except requests.HTTPError as e:
+        # Catch HTTP errors, including 451
+        session.execute(
+            update(Job)
+            .where(Job.id == job_id)
+            .values(status=JobStatus.UNAVAILABLE)
+        )
+        session.commit()
+        logger.error(f"Job {job_id} failed with client HTTP error: {e}.")
+        
+        session.add(
+            AnalysisResult(
+                job_id=job_id,
+                volatility=0,
+                rsi_last=0,
+                monte_carlo_mean=0
+            )
+        )
+        return
 
     result_data = compute_analysis(data, monte_carlo_runs)
 

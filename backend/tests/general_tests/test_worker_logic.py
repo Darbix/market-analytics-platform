@@ -57,7 +57,6 @@ async def test_run_analysis_logic(db_session, mocker):
 
 @pytest.mark.asyncio
 async def test_download_price_history_logic(db_session, mocker):
-
     mocker.patch(
         "app.workers.tasks.fetch_klines",
         return_value=[

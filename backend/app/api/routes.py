@@ -60,7 +60,6 @@ async def get_job(job_id: int, session: AsyncSessionLocal = Depends(get_session)
     job = result.scalar_one_or_none()
 
     if not job:
-        # return {"error": "Job not found"}
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail=f"Job {job_id} not found"
@@ -103,18 +102,18 @@ async def get_analysis(job_id: int, session: AsyncSessionLocal = Depends(get_ses
     )
     analysis = result.scalar_one_or_none()
 
-    if not analysis:
-        result = await session.execute(
-            select(Job).where(Job.id == job_id)
-        )
-        job = result.scalar_one_or_none()
-        
-        if not job:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, 
-                detail=f"Job {job_id} not found"
-            )
+    result = await session.execute(
+        select(Job).where(Job.id == job_id)
+    )
+    job = result.scalar_one_or_none()
 
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"Job {job_id} not found"
+        )
+
+    if not analysis or job.status == JobStatus.UNAVAILABLE:
         return {
             "job_id": job.id,
             "status": job.status,
@@ -123,7 +122,7 @@ async def get_analysis(job_id: int, session: AsyncSessionLocal = Depends(get_ses
 
     return {
         "job_id": job_id,
-        "status": JobStatus.COMPLETED,
+        "status": job.status,
         "data": {
             "volatility": analysis.volatility,
             "rsi_last": analysis.rsi_last,
