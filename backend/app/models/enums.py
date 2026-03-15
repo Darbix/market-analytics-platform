@@ -6,4 +6,3 @@ class JobStatus(str, enum.Enum):
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
-    UNAVAILABLE = "UNAVAILABLE"

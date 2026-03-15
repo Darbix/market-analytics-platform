@@ -2,7 +2,7 @@ import time
 from fastapi import status
 
 
-def wait_for_analysis_job(client, job_id, timeout=120):
+def wait_for_analysis_job(client, job_id, timeout=60):
     """Poll job status until completed."""
     start = time.time()
     delay = 2
@@ -15,7 +15,7 @@ def wait_for_analysis_job(client, job_id, timeout=120):
         data = res.json()
         status = data["status"]
 
-        if status == "COMPLETED" or status == "UNAVAILABLE":
+        if status == "COMPLETED":
             return data
         elif status == "FAILED":
             break
@@ -48,8 +48,5 @@ def test_full_analysis_flow(client):
 
     result = wait_for_analysis_job(client, job_id)
 
-    if result["status"] == "COMPLETED":
-        assert result["data"] is not None
-        assert "volatility" in result["data"]
-    else:
-        assert result["data"] is None
+    assert result["data"] is not None
+    assert "volatility" in result["data"]

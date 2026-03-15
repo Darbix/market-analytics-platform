@@ -51,7 +51,7 @@ jobs:
         run: cp ../.env.example ../.env
 
       - name: Start containers
-        run: docker compose up -d --build
+        run: docker compose -f docker-compose.yml -f docker-compose.test.yml up -d --build
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -84,4 +84,6 @@ jobs:
           docker logs market-analytics-platform-postgres-1 || true
           echo "----- Redis Logs -----"
           docker logs market-analytics-platform-redis-1 || true
-          docker compose down
+          echo "----- Mock server -----"
+          docker logs market-analytics-platform-mock-binance-1 || true
+          docker compose -f docker-compose.yml -f docker-compose.test.yml down

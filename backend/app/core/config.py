@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     celery_result_backend: str
     binance_url: str
 
+    # Note: OS environment variables override the values from the file
     model_config = SettingsConfigDict(
         env_file=os.getenv("ENV_FILE", ".env"),
         extra="ignore"
@@ -17,5 +18,3 @@ class Settings(BaseSettings):
 @cache
 def get_settings():
     return Settings()
-
-settings = get_settings()

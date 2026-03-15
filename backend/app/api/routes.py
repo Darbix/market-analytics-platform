@@ -113,7 +113,7 @@ async def get_analysis(job_id: int, session: AsyncSessionLocal = Depends(get_ses
             detail=f"Job {job_id} not found"
         )
 
-    if not analysis or job.status == JobStatus.UNAVAILABLE:
+    if not analysis:
         return {
             "job_id": job.id,
             "status": job.status,

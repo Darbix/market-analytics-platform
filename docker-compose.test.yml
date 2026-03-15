@@ -1,0 +1,19 @@
+services:
+
+  mock-binance:
+    build:
+      context: ./backend/tests/mocks/mock_binance
+    ports:
+      - "9000:8000"
+
+  api:
+    environment:
+      BINANCE_URL: http://mock-binance:8000/api/v3/klines
+    depends_on:
+      - mock-binance
+
+  worker:
+    environment:
+      BINANCE_URL: http://mock-binance:8000/api/v3/klines
+    depends_on:
+      - mock-binance

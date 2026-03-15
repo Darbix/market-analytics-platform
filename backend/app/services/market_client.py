@@ -1,7 +1,10 @@
 import requests
 from datetime import datetime
 
-from app.core.config import settings
+from app.core.config import get_settings
+
+
+settings = get_settings()
 
 
 def fetch_klines(
