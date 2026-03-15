@@ -6,15 +6,11 @@ jobs:
   general-tests:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: backend
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Prepare .env for tests
-        run: cp ../.env.example ../.env
+        run: cp .env.example .env
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -31,24 +27,24 @@ jobs:
           key: poetry-${{ runner.os }}-${{ hashFiles('backend/poetry.lock') }}
 
       - name: Install dependencies
-        run: poetry install
+        run: |
+          cd backend
+          poetry install
 
       - name: Run tests
-        run: poetry run pytest tests/general_tests -v
+        run: |
+          cd backend
+          poetry run pytest tests/general_tests -v
 
   integration-tests:
     needs: general-tests
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: backend
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Prepare .env for tests
-        run: cp ../.env.example ../.env
+        run: cp .env.example .env
 
       - name: Start containers
         run: docker compose -f docker-compose.yml -f docker-compose.test.yml up -d --build
@@ -68,22 +64,18 @@ jobs:
           key: poetry-${{ runner.os }}-${{ hashFiles('backend/poetry.lock') }}
 
       - name: Install dependencies
-        run: poetry install
+        run: |
+          cd backend
+          poetry install
 
       - name: Run integration tests
-        run: poetry run pytest tests/integration_tests -v
+        run: |
+          cd backend
+          poetry run pytest tests/integration_tests -v
 
       - name: Stop containers
         if: always()
         run: |
-          echo "----- API Logs -----"
-          docker logs market-analytics-platform-api-1 || true
-          echo "----- Worker Logs -----"
-          docker logs market-analytics-platform-worker-1 || true
-          echo "----- Postgres Logs -----"
-          docker logs market-analytics-platform-postgres-1 || true
-          echo "----- Redis Logs -----"
-          docker logs market-analytics-platform-redis-1 || true
-          echo "----- Mock server -----"
-          docker logs market-analytics-platform-mock-binance-1 || true
+          echo "----- All container logs -----"
+          docker compose -f docker-compose.yml -f docker-compose.test.yml logs
           docker compose -f docker-compose.yml -f docker-compose.test.yml down
