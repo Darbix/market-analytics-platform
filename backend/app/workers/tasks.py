@@ -9,7 +9,6 @@ from sqlalchemy.dialects.postgresql import insert
 
 from app.workers.celery_app import celery_app
 from app.core.database_sync import SessionLocal
-from app.core.config import settings
 from app.models.job import Job
 from app.models.analysis_result import AnalysisResult
 from app.models.price_history import PriceHistory
@@ -17,6 +16,10 @@ from app.models.enums import JobStatus
 from app.services.market_client import fetch_klines
 from app.services.price_data_service import parse_klines
 from app.services.analysis_service import compute_analysis
+from app.core.config import get_settings
+
+
+settings = get_settings()
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -66,27 +69,7 @@ def run_analysis_logic(
         .values(status=JobStatus.PROCESSING)
     )
     
-    try:
-        data = fetch_klines(symbol, interval, limit, start_time, end_time)
-    except requests.HTTPError as e:
-        # Catch HTTP errors, including 451
-        session.execute(
-            update(Job)
-            .where(Job.id == job_id)
-            .values(status=JobStatus.UNAVAILABLE)
-        )
-        session.commit()
-        logger.error(f"Job {job_id} failed with client HTTP error: {e}.")
-        
-        session.add(
-            AnalysisResult(
-                job_id=job_id,
-                volatility=0,
-                rsi_last=0,
-                monte_carlo_mean=0
-            )
-        )
-        return
+    data = fetch_klines(symbol, interval, limit, start_time, end_time)
 
     result_data = compute_analysis(data, monte_carlo_runs)
 

@@ -117,11 +117,16 @@ poetry run pytest tests/general_tests -v
 #### Automated Integration Tests
 Run the containers:
 ```
-docker compose up -d --build
+docker compose -f docker-compose.yml -f docker-compose.test.yml up --build
 ```
 
 Then run the tests:
 ```
 cd backend/
 poetry run pytest tests/integration_tests -v
+```
+
+Stop the containers from the project root:
+```
+docker compose -f docker-compose.yml -f docker-compose.test.yml down
 ```

@@ -20,7 +20,8 @@ def compute_analysis(data: list, monte_carlo_runs: int):
     delta = df["close"].diff()
     gain = delta.clip(lower=0).rolling(RSI_PERIOD).mean()
     loss = -delta.clip(upper=0).rolling(RSI_PERIOD).mean()
-    rs = gain / loss
+    safe_loss = loss.replace(0, 1e-10).fillna(1e-10)
+    rs = gain / safe_loss
     rsi = RSI_SCALE - (RSI_SCALE / (1 + rs))
 
 
