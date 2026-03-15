@@ -1,0 +1,87 @@
+name: General Tests
+
+on: [push, pull_request]
+
+jobs:
+  general-tests:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare .env for tests
+        run: cp ../.env.example ../.env
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install poetry
+      
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('backend/poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run tests
+        run: poetry run pytest tests/general_tests -v
+
+  integration-tests:
+    needs: general-tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare .env for tests
+        run: cp ../.env.example ../.env
+
+      - name: Start containers
+        run: docker compose up -d --build
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install poetry
+      
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('backend/poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run integration tests
+        run: poetry run pytest tests/integration_tests -v
+
+      - name: Stop containers
+        if: always()
+        run: |
+          echo "----- API Logs -----"
+          docker logs market-analytics-platform-api-1 || true
+          echo "----- Worker Logs -----"
+          docker logs market-analytics-platform-worker-1 || true
+          echo "----- Postgres Logs -----"
+          docker logs market-analytics-platform-postgres-1 || true
+          echo "----- Redis Logs -----"
+          docker logs market-analytics-platform-redis-1 || true
+          docker compose down

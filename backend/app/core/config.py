@@ -1,4 +1,6 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
+from functools import cache
 
 
 class Settings(BaseSettings):
@@ -7,8 +9,13 @@ class Settings(BaseSettings):
     celery_result_backend: str
     binance_url: str
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    model_config = SettingsConfigDict(
+        env_file=os.getenv("ENV_FILE", ".env"),
+        extra="ignore"
+    )
 
-settings = Settings()
+@cache
+def get_settings():
+    return Settings()
+
+settings = get_settings()

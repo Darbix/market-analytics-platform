@@ -104,3 +104,24 @@ Exit the environment:
 ```
 exit
 ```
+
+## Testing
+### Backend API
+#### Automated Component Logic Tests and Unit Tests
+Run the tests:
+```
+cd backend/
+poetry run pytest tests/general_tests -v
+```
+
+#### Automated Integration Tests
+Run the containers:
+```
+docker compose up -d --build
+```
+
+Then run the tests:
+```
+cd backend/
+poetry run pytest tests/integration_tests -v
+```
