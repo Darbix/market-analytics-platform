@@ -161,8 +161,8 @@ async def get_prices(
     symbol: str,
     interval: str = "1m",
     limit: int = 100,
-    start_time: datetime | None = Query(None),
-    end_time: datetime | None = Query(None),
+    start_time: datetime | None = Query(None, alias="startTime"),
+    end_time: datetime | None = Query(None, alias="endTime"),
     session: AsyncSessionLocal = Depends(get_session)
 ):
     query = select(PriceHistory).where(
@@ -182,7 +182,6 @@ async def get_prices(
 
     result = await session.execute(query)
     rows = result.scalars().all()
-
     rows = sorted(rows, key=lambda x: x.timestamp)
 
     data = None
