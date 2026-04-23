@@ -42,7 +42,6 @@ This project is currently a work in progress and serves as a personal project to
 
 
 ## Project Setup
-
 ### 1. Clone the repository
 
 ```bash
@@ -105,10 +104,11 @@ Exit the environment:
 exit
 ```
 
+
 ## Testing
 ### Backend API
 #### Automated Component Logic Tests and Unit Tests
-Run the tests:
+Change directory and run the *pytest* tests:
 ```
 cd backend/
 poetry run pytest tests/general_tests -v
@@ -129,4 +129,16 @@ poetry run pytest tests/integration_tests -v
 Stop the containers from the project root:
 ```
 docker compose -f docker-compose.yml -f docker-compose.test.yml down
+```
+
+### Frontend
+Change directory and run the *Jest* tests:
+```
+cd frontend/
+npm test
+```
+
+Generate a coverage report:
+```
+npm test -- --coverage --watchAll=false
 ```
