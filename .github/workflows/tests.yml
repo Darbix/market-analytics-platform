@@ -3,6 +3,25 @@ name: General Tests
 on: [push, pull_request]
 
 jobs:
+  frontend-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: ./frontend
+
+      - name: Run frontend tests
+        run: npm test -- --watchAll=false
+        working-directory: ./frontend
+
   general-tests:
     runs-on: ubuntu-latest
 
@@ -27,14 +46,12 @@ jobs:
           key: poetry-${{ runner.os }}-${{ hashFiles('backend/poetry.lock') }}
 
       - name: Install dependencies
-        run: |
-          cd backend
-          poetry install
+        run: poetry install
+        working-directory: ./backend
 
       - name: Run tests
-        run: |
-          cd backend
-          poetry run pytest tests/general_tests -v
+        run: poetry run pytest tests/general_tests -v
+        working-directory: ./backend
 
   integration-tests:
     needs: general-tests
@@ -64,14 +81,12 @@ jobs:
           key: poetry-${{ runner.os }}-${{ hashFiles('backend/poetry.lock') }}
 
       - name: Install dependencies
-        run: |
-          cd backend
-          poetry install
+        run: poetry install
+        working-directory: ./backend
 
       - name: Run integration tests
-        run: |
-          cd backend
-          poetry run pytest tests/integration_tests -v
+        run: poetry run pytest tests/integration_tests -v
+        working-directory: ./backend
 
       - name: Stop containers
         if: always()
