@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
 
-const COINS = [
+export const COINS = [
   { symbol: "BTCUSDT", color: "text-orange-400" },
   { symbol: "ETHUSDT", color: "text-blue-400" },
   { symbol: "BNBUSDT", color: "text-yellow-400" },
   { symbol: "SOLUSDT", color: "text-purple-400" },
 ];
 
+
 export default function Dashboard() {
   const [market, setMarket] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const fetchPrices = async () => {
     try {
@@ -32,7 +34,8 @@ export default function Dashboard() {
       setMarket(mapped);
       setLoading(false);
     } catch (err) {
-      console.error(err);
+      setError("Failed to fetch market data.")
+      setLoading(false);
     }
   };
 
@@ -59,6 +62,13 @@ export default function Dashboard() {
           ))}
         </div>
 
+        {error && (
+          <Box>
+            <div role="alert" className="text-error font-medium">
+              ⨉ Error: {error}
+            </div>
+          </Box>
+        )}
       </div>
     </div>
   );
@@ -71,7 +81,10 @@ function PriceCard({ coin, data, loading }) {
   const positive = change >= 0;
 
   return (
-    <div className="bg-box border border-box-border p-5 rounded-2xl relative overflow-hidden shadow-lg flex flex-col justify-between min-h-40">
+    <div className="
+      bg-box border border-box-border p-5 rounded-2xl relative
+      overflow-hidden shadow-lg flex flex-col justify-between min-h-40
+    ">
 
       <div className="absolute -top-10 -right-10 w-35 h-35 rounded-full blur-3xl opacity-30 bg-primary" />
 
@@ -90,23 +103,23 @@ function PriceCard({ coin, data, loading }) {
         <div className="mt-4 flex flex-col gap-1">
 
           <span className={`text-3xl font-mono font-bold font-white`}>
-            {loading ? "$---" : `$${data?.price.toLocaleString()}`}
+            {loading || !data ? "$---" : `$${data?.price.toLocaleString()}`}
           </span>
 
-          {!loading && (
-            <span
-              className={`text-sm font-semibold ${
-                positive ? "text-green-400" : "text-red-400"
-              }`}
-            >
-              {positive ? "▲" : "▼"} {Math.abs(change).toFixed(2)}%
-            </span>
-          )}
+          {!loading && data && (
+            <>
+              <span
+                className={`text-sm font-semibold ${
+                  positive ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {positive ? "▲" : "▼"} {Math.abs(change).toFixed(2)}%
+              </span>
 
-          {!loading && (
-            <span className="text-xs text-gray-400 mt-1 italic">
-              24h Price Change
-            </span>
+              <span className="text-xs text-gray-400 mt-1 italic">
+                24h Price Change
+              </span>
+            </>
           )}
         </div>
 
@@ -116,6 +129,14 @@ function PriceCard({ coin, data, loading }) {
         Symbol: {coin.symbol}
       </div>
 
+    </div>
+  );
+}
+
+function Box({ children, className = "" }) {
+  return (
+    <div className={`flex flex-col gap-6 bg-box border border-box-border rounded-3xl p-6 ${className}`}>
+      {children}
     </div>
   );
 }
